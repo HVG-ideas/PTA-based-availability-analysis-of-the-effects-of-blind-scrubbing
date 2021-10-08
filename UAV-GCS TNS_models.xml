@@ -1,0 +1,972 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here. 3;
+const int t_delay = 5;
+int counter = 0;
+int m_count = 0;
+const int num_messages = 10;
+const int num_of_missions=10;
+/*
+const double M_PI = 3.14159265358979312;
+const int thresh_power_recieved = 80;
+int  x_pos  = 10;
+int  y_pos  = 10;
+
+*/
+int ST_count  = 0;
+
+const int inital_count = 10;
+int counter_GCS = 0;
+int mission_count = 1;
+int x_counter = 0;
+int y_counter = 0;
+const int acc_time = 25;
+const int s_delay = 1; 
+
+const double wind_angle = 0.785398;
+const int max_speed = 5000;
+int speed_x    = 0;
+int speed_y    = 0;
+int wind_speed = 125;
+int d_acc_x    = 100;
+int d_acc_y    = 100;
+int grd_speed  = 0;
+int remind = 0;
+int nextMissionMov = 0;
+
+const int attack_type = 1;
+bool injectAttack = false;
+bool cont        = false;
+bool y_cont      = false;
+bool movStart    = false;
+bool faultInject = false;
+bool scrubUnav   = false;
+bool failOcc     = false;
+bool failMissionDone = false; 
+int rand_gen = 0;
+
+
+
+const double transmitter_gain = 2.8;    
+const double rec_gain = 2.8;
+
+const int    one_minus_lambda = 99896;
+const int    lambda = 104;
+
+
+const double power_transmitted= 0.0025118864315;
+broadcast chan MsgCount;
+broadcast chan req,req_1,ack;
+broadcast chan item,item1;
+broadcast chan nextMission;
+broadcast chan missionsDone;
+broadcast chan failed;
+broadcast chan no_Response,doneMov;
+broadcast chan catFailUAV;
+broadcast chan scrubDone;
+
+
+void grd_speed_update()
+{
+    double temp_grd = 0.0;
+    double Vx  = 0.0;
+    //double Vy  = 0.0;
+    double Vwx = 0.0;
+    //double Vwy = 0.0;
+    int    convertInt = 0;
+    double sinResult = sin(wind_angle);
+    double cosResult = cos(wind_angle);
+    Vwx = wind_speed * cosResult;
+   // Vwy = wind_speed * sinResult; 
+    Vx  = speed_x - Vwx;
+   // Vy  = speed_y - Vwy;
+    //temp_grd  = hypot(Vx,Vy);
+    //convertInt = fint(temp_grd);
+    convertInt = fint(Vx);
+    grd_speed  = convertInt;
+    //grd_speed   = convertInt + grd_speed;
+}</declaration>
+	<template>
+		<name x="5" y="5">GCS</name>
+		<declaration>// Place local declarations here.
+clock t;
+
+bool guard1() 
+{
+    bool cond = false;
+     if( t&gt;=t_delay)
+    {
+       cond = true;
+    }
+    else
+    {
+        cond = false;
+    }
+     return cond;
+
+}
+/*
+bool guard2() 
+{
+    bool cond2 = false;
+     if((m_count &lt; (num_messages - 1)) &amp;&amp; t&gt;=t_delay)
+    {
+       cond2 = true;
+    }
+    else
+    {
+        cond2 = false;
+    }
+     return cond2;
+
+}
+*/
+/*
+bool guard3() 
+{
+    bool cond2 = false;
+     if((m_count &gt;= (num_messages - 1)) &amp;&amp; t&gt;=t_delay)
+    {
+       cond2 = true;
+    }
+    else
+    {
+        cond2 = false;
+    }
+     return cond2;
+
+}
+*/
+void update1 ()
+{
+    t = 0;
+    m_count = m_count + 1;
+}
+
+
+void update2()
+{
+   t = 0;
+   movStart = true;
+  remind = m_count % 2;
+}
+
+
+void update3()
+{
+    t = 0;
+    /*
+    y_cont = false;
+    cont = false;
+    if( mission_count == num_of_missions)
+    {
+        faultInject = true;          
+    }
+    else
+    {
+        faultInject = false;
+    }
+    */
+}
+
+void update4()
+{
+    t = 0;
+    mission_count = mission_count + 1;
+    nextMissionMov = 1;
+    m_count = 0;
+    movStart = false;
+}
+
+
+
+
+</declaration>
+		<location id="id0" x="23358" y="6281">
+			<name x="23298" y="6247">Initial_message_count</name>
+			<label kind="invariant" x="23324" y="6230">t &lt;= t_delay</label>
+		</location>
+		<location id="id1" x="23553" y="6281">
+			<name x="23511" y="6238">wait_for_req</name>
+		</location>
+		<location id="id2" x="23698" y="6281">
+			<name x="23689" y="6247">msgItem</name>
+			<label kind="invariant" x="23706" y="6230">t&lt;=t_delay</label>
+		</location>
+		<location id="id3" x="23970" y="6281">
+			<name x="23944" y="6247">movDone</name>
+			<label kind="invariant" x="23944" y="6230">t&lt;=s_delay</label>
+		</location>
+		<location id="id4" x="23809" y="6281">
+			<name x="23800" y="6239">Ack</name>
+		</location>
+		<location id="id5" x="24080" y="6281">
+			<name x="24038" y="6239">Missions_Done</name>
+		</location>
+		<location id="id6" x="23596" y="6196">
+			<name x="23553" y="6162">failedGCSCA</name>
+		</location>
+		<location id="id7" x="23681" y="6213">
+			<name x="23671" y="6179">failedGCSFI</name>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="23570" y="6213">catFailUAV?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="23503" y="6196">failed?</label>
+			<nail x="23469" y="6238"/>
+			<nail x="23477" y="6230"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id5"/>
+			<label kind="guard" x="23978" y="6298">t&gt;=s_delay &amp;&amp;
+mission_count == num_of_missions</label>
+			<label kind="synchronisation" x="23978" y="6357">missionsDone!</label>
+			<label kind="assignment" x="23988" y="6281">t = 0</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id0"/>
+			<label kind="guard" x="23596" y="6468">t&gt;=s_delay &amp;&amp;
+mission_count &lt; num_of_missions</label>
+			<label kind="synchronisation" x="23596" y="6519">nextMission!</label>
+			<label kind="assignment" x="23596" y="6502">update4()</label>
+			<nail x="23970" y="6460"/>
+			<nail x="23970" y="6460"/>
+			<nail x="23358" y="6460"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="23826" y="6255">doneMov?</label>
+			<label kind="assignment" x="23842" y="6281">t = 0</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id4"/>
+			<label kind="guard" x="23698" y="6298">m_count &gt;= (num_messages - 1) &amp;&amp;
+t&gt;=t_delay</label>
+			<label kind="synchronisation" x="23732" y="6264">ack!</label>
+			<label kind="assignment" x="23715" y="6281">update2()</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="guard" x="23579" y="6408">(m_count &lt; (num_messages - 1)) 
+&amp;&amp; t&gt;=t_delay</label>
+			<label kind="synchronisation" x="23613" y="6374">item!</label>
+			<label kind="assignment" x="23596" y="6391">update1()</label>
+			<nail x="23698" y="6391"/>
+			<nail x="23698" y="6391"/>
+			<nail x="23553" y="6391"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="23613" y="6264">req?</label>
+			<label kind="assignment" x="23613" y="6281">t = 0</label>
+			<nail x="23571" y="6281"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="23324" y="6213">t&gt;=t_delay</label>
+			<label kind="synchronisation" x="23418" y="6264">MsgCount!</label>
+			<label kind="assignment" x="23418" y="6281">update3()</label>
+		</transition>
+	</template>
+	<template>
+		<name>UAV</name>
+		<declaration>clock t;
+
+bool guard1() 
+{
+    bool cond = false;
+     if(t&gt;=t_delay)
+    {
+       cond = true;
+    }
+    else
+    {
+        cond = false;
+    }
+     return cond;
+
+}
+
+
+</declaration>
+		<location id="id8" x="-833" y="-663">
+			<name x="-841" y="-697">wait_for_item</name>
+		</location>
+		<location id="id9" x="-969" y="-663">
+			<name x="-977" y="-697">reqState</name>
+			<label kind="invariant" x="-977" y="-714">t&lt;=t_delay</label>
+		</location>
+		<location id="id10" x="-595" y="-663">
+			<name x="-629" y="-697">movDone</name>
+		</location>
+		<location id="id11" x="-1113" y="-663">
+			<name x="-1199" y="-697">Initial_message_count</name>
+		</location>
+		<location id="id12" x="-714" y="-663">
+			<name x="-724" y="-697">Ack</name>
+		</location>
+		<location id="id13" x="-485" y="-663">
+			<name x="-527" y="-697">Missions_done</name>
+		</location>
+		<location id="id14" x="-1139" y="-739">
+			<name x="-1165" y="-782">failedUAVCA</name>
+		</location>
+		<location id="id15" x="-884" y="-773">
+			<name x="-901" y="-807">failedUAVFI</name>
+		</location>
+		<init ref="id11"/>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-994" y="-841">t&gt;=t_delay &amp;&amp; 
+(failOcc == true)</label>
+			<label kind="synchronisation" x="-994" y="-756">catFailUAV!</label>
+			<label kind="assignment" x="-1011" y="-782">t = 0</label>
+			<nail x="-1020" y="-756"/>
+			<nail x="-1020" y="-756"/>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-1164" y="-824">t&gt;=t_delay &amp;&amp; 
+faultInject == true</label>
+			<label kind="synchronisation" x="-1164" y="-875">failed!</label>
+			<label kind="assignment" x="-1164" y="-858">grd_speed = 0,
+t = 0</label>
+			<nail x="-1029" y="-705"/>
+			<nail x="-1071" y="-739"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="-587" y="-654">missionsDone?</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="-944" y="-518">nextMission?</label>
+			<label kind="assignment" x="-918" y="-501">t = 0</label>
+			<nail x="-595" y="-518"/>
+			<nail x="-1114" y="-518"/>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id10"/>
+			<label kind="synchronisation" x="-696" y="-680">doneMov?</label>
+			<label kind="assignment" x="-680" y="-663">t = 0</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="-791" y="-680">ack?</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-918" y="-569">item?</label>
+			<label kind="assignment" x="-918" y="-552">t = 0</label>
+			<nail x="-833" y="-552"/>
+			<nail x="-859" y="-552"/>
+			<nail x="-969" y="-552"/>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-969" y="-646">t&gt;=t_delay &amp;&amp; 
+(faultInject == false ||
+failOcc == false)</label>
+			<label kind="synchronisation" x="-918" y="-680">req!</label>
+			<label kind="assignment" x="-918" y="-697">t = 0</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-1080" y="-680">MsgCount?</label>
+			<label kind="assignment" x="-1071" y="-663">t = 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>Xspeed</name>
+		<declaration>clock t;
+
+void x_update ()
+{
+    //Initilaization
+    double temp_grd_x = 0.0;
+    double Vx  = 0.0;
+    double Vy  = 0.0;
+    double Vwx = 0.0;
+    double Vwy = 0.0;
+    int    convertInt = 0;
+    //angle calculation
+    double sinResult = sin(wind_angle);
+    double cosResult = cos(wind_angle);
+    //counter and clock update
+    t = 0;
+    x_counter = x_counter + 1;
+    if((speed_x &lt; max_speed) &amp;&amp; (failOcc == false))
+      { 
+           speed_x  = speed_x + d_acc_x;
+      }
+    else if(speed_x == max_speed &amp;&amp; (failOcc == false))
+    {
+         speed_x  = max_speed;
+    }
+    else if((failOcc == true) &amp;&amp; rand_gen == 3)
+    {
+        speed_x = speed_x + d_acc_x;
+    }
+    else 
+      {
+           speed_x  = max_speed;
+      }
+    grd_speed_update();
+    /*
+    //ground speed calculation
+    Vwx = wind_speed * cosResult;
+    Vwy = wind_speed * sinResult; 
+    Vx  = speed_x + Vwx;
+   // Vy  = speed_y + Vwy;
+    temp_grd_x  = hypot(Vx,Vy);
+    convertInt = fint(temp_grd_x);
+    grd_speed   = convertInt + grd_speed;
+    */
+}
+
+
+
+void x_update2 ()
+{
+    t = 0;
+    x_counter = 0;
+    m_count = m_count - 1;
+}
+
+/*
+bool guardX() 
+{
+    bool changing = false;
+     = 
+    
+    if((t&gt;=s_delay) &amp;&amp; (movStart == true) &amp;&amp; (remind == 0) &amp;&amp; (m_count &gt;= 0))
+        {
+         changing = true;
+        }
+    else
+        {
+         changing = false; 
+        }
+    return changing;
+}
+*/</declaration>
+		<location id="id16" x="-748" y="-102">
+			<name x="-790" y="-102">Initial</name>
+			<label kind="invariant" x="-816" y="-195">t&lt;=s_delay</label>
+		</location>
+		<location id="id17" x="-459" y="-59">
+			<name x="-450" y="-51">X_axis</name>
+			<label kind="invariant" x="-450" y="-34">t&lt;=s_delay</label>
+		</location>
+		<location id="id18" x="-739" y="17">
+			<name x="-773" y="-17">Done_mov</name>
+			<label kind="invariant" x="-816" y="25">t&lt;=s_delay</label>
+		</location>
+		<init ref="id16"/>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id18"/>
+			<label kind="guard" x="-731" y="76">t&gt;=s_delay &amp;&amp; 
+nextMissionMov != 1</label>
+			<label kind="assignment" x="-722" y="59">t = 0</label>
+			<nail x="-688" y="17"/>
+			<nail x="-688" y="17"/>
+			<nail x="-688" y="59"/>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-884" y="93">t&gt;=s_delay &amp;&amp;
+nextMissionMov == 1</label>
+			<label kind="assignment" x="-884" y="76">t = 0</label>
+			<nail x="-739" y="76"/>
+			<nail x="-909" y="76"/>
+			<nail x="-909" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id18"/>
+			<label kind="guard" x="-841" y="-76">t&gt;=s_delay &amp;&amp; 
+m_count == -1</label>
+			<label kind="synchronisation" x="-833" y="-34">doneMov!</label>
+			<label kind="assignment" x="-824" y="0">t = 0</label>
+			<nail x="-875" y="-102"/>
+			<nail x="-875" y="-76"/>
+			<nail x="-875" y="17"/>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-450" y="-17">t&gt;=s_delay &amp;&amp; x_counter&lt;=acc_time</label>
+			<label kind="assignment" x="-450" y="0">x_update()</label>
+			<nail x="-459" y="-102"/>
+			<nail x="-365" y="-102"/>
+			<nail x="-365" y="-59"/>
+			<nail x="-391" y="-59"/>
+			<nail x="-425" y="-59"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-816" y="-178">t&gt;=s_delay</label>
+			<label kind="assignment" x="-816" y="-212">t = 0</label>
+			<nail x="-748" y="-153"/>
+			<nail x="-824" y="-153"/>
+			<nail x="-824" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-671" y="-102">x_counter&gt;=acc_time</label>
+			<label kind="assignment" x="-654" y="-76">x_update2()</label>
+			<nail x="-459" y="-68"/>
+			<nail x="-459" y="-76"/>
+			<nail x="-459" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-654" y="-17">(t&gt;=s_delay) &amp;&amp; 
+(movStart == true) &amp;&amp;  
+(m_count &gt;= 0)</label>
+			<label kind="assignment" x="-620" y="-42">t = 0</label>
+			<nail x="-749" y="-17"/>
+			<nail x="-689" y="-17"/>
+			<nail x="-621" y="-17"/>
+			<nail x="-460" y="-17"/>
+		</transition>
+	</template>
+	<template>
+		<name>Yspeed</name>
+		<declaration>clock t;
+
+void y_update()
+{
+    //Initilaization
+    double temp_grd_y = 0.0;
+    double Vx  = 0.0;
+    double Vy  = 0.0;
+    double Vwx = 0.0;
+    double Vwy = 0.0;
+    int    convertInt = 0;
+    //angle calculation
+    double sinResult = sin(wind_angle);
+    double cosResult = cos(wind_angle);
+    //counter and clock update
+    t = 0;
+    y_counter = y_counter + 1;
+    if( speed_y &lt; max_speed)
+      { 
+           speed_y  = speed_y + d_acc_y;
+      }
+    else if(speed_y == max_speed)
+    {
+         speed_y  = max_speed;
+    }
+    else 
+      {
+           speed_y  = max_speed;
+      }
+     grd_speed_update();
+     /*
+    //ground speed calculation
+    Vwx = wind_speed * cosResult;
+    Vwy = wind_speed * sinResult; 
+   // Vx  = speed_x + Vwx;
+    Vy  = speed_y - Vwy;
+    temp_grd_y = hypot(Vx,Vy);
+    convertInt = fint(temp_grd_y);
+    grd_speed   = convertInt + grd_speed;
+    */
+}
+
+
+void y_update2() 
+{
+    t = 0;
+    y_counter = 0;
+    m_count = m_count - 1;
+}
+/*
+bool guardY() 
+{
+    int remind = m_count % 2;
+    bool cond = false;
+    if((t&gt;=s_delay) &amp;&amp; (movStart == true) &amp;&amp; (remind != 0) &amp;&amp; (m_count &gt;= 0))
+        {
+         cond = true;
+        }
+    else
+        {
+         cond = false; 
+        }
+    return cond;
+}*/</declaration>
+		<location id="id19" x="-476" y="-127">
+			<name x="-510" y="-161">Initial</name>
+			<label kind="invariant" x="-612" y="-153">t&lt;=s_delay</label>
+		</location>
+		<location id="id20" x="-255" y="-127">
+			<name x="-247" y="-119">Y_axis</name>
+			<label kind="invariant" x="-247" y="-102">t&lt;=s_delay</label>
+		</location>
+		<location id="id21" x="-578" y="-51">
+			<name x="-552" y="-34">Done_mov</name>
+			<label kind="invariant" x="-663" y="-68">t&lt;=s_delay</label>
+		</location>
+		<init ref="id19"/>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id21"/>
+			<label kind="guard" x="-612" y="25">t&gt;=s_delay &amp;&amp; 
+nextMissionMov != 1</label>
+			<label kind="assignment" x="-585" y="8">t = 0</label>
+			<nail x="-535" y="25"/>
+			<nail x="-603" y="25"/>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-714" y="-119">t&gt;=s_delay &amp;&amp; 
+nextMissionMov == 1</label>
+			<label kind="assignment" x="-714" y="-85">t = 0</label>
+			<nail x="-578" y="-127"/>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="-552" y="-68">doneMov?</label>
+			<label kind="assignment" x="-560" y="-51">t = 0</label>
+			<nail x="-476" y="-51"/>
+			<nail x="-476" y="-51"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-442" y="-76">y_counter&gt;=acc_time</label>
+			<label kind="assignment" x="-442" y="-51">y_update2(),
+remind = m_count % 2</label>
+			<nail x="-255" y="-51"/>
+			<nail x="-263" y="-51"/>
+			<nail x="-476" y="-51"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-247" y="-85">y_counter&lt;=acc_time &amp;&amp;
+t&gt;=s_delay</label>
+			<label kind="assignment" x="-247" y="-51">y_update()</label>
+			<nail x="-255" y="-178"/>
+			<nail x="-204" y="-178"/>
+			<nail x="-204" y="-127"/>
+			<nail x="-238" y="-127"/>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-467" y="-212">(t&gt;=s_delay) &amp;&amp; 
+(movStart == true) &amp;&amp; 
+(remind != 0 &amp;&amp; remind != -1) &amp;&amp; 
+(m_count &gt;= 0)</label>
+			<label kind="assignment" x="-425" y="-127">t = 0</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-612" y="-170">t&gt;=s_delay</label>
+			<label kind="assignment" x="-603" y="-187">t = 0</label>
+			<nail x="-476" y="-170"/>
+			<nail x="-476" y="-170"/>
+			<nail x="-535" y="-170"/>
+			<nail x="-535" y="-127"/>
+		</transition>
+	</template>
+	<template>
+		<name>injectFault</name>
+		<declaration>clock t;
+
+
+
+
+void fail_update() 
+{
+    /*
+    double  rand_var = random(3) + 1;
+    int     rand_int = fint(rand_var);
+    rand_gen = rand_int;    
+    */
+    rand_gen = 3;
+    t = 0;
+}
+void catUpdate()
+{
+    failOcc = true;
+   //njectAttack = true;
+    t = 0;
+   
+    
+    
+}
+void nonCatUpdate()
+{
+    //failOcc = true;
+    d_acc_x = 500;
+    t = 0;
+
+}
+
+
+</declaration>
+		<location id="id22" x="-943" y="-178">
+			<name x="-1003" y="-195">Work</name>
+			<label kind="invariant" x="-1037" y="-178">t &lt;= 10</label>
+		</location>
+		<location id="id23" x="-646" y="-255">
+			<name x="-672" y="-289">Targeted</name>
+			<label kind="invariant" x="-637" y="-238">t&lt;=t_delay</label>
+		</location>
+		<location id="id24" x="-654" y="-68">
+			<name x="-646" y="-59">Fail</name>
+			<label kind="invariant" x="-646" y="-42">t &lt;= 1</label>
+		</location>
+		<location id="id25" x="-476" y="-153">
+			<name x="-501" y="-144">cat_fail</name>
+		</location>
+		<location id="id26" x="-476" y="42">
+			<name x="-518" y="8">NonCat_fail</name>
+		</location>
+		<location id="id27" x="-476" y="-68">
+			<name x="-501" y="-102">Masked_fail</name>
+		</location>
+		<branchpoint id="id28" x="-943" y="-68">
+		</branchpoint>
+		<init ref="id22"/>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="-399" y="59">scrubDone?</label>
+			<label kind="assignment" x="-399" y="-34">d_acc_x = 100,
+t = 0,
+rand_gen = 0,
+failOcc = false</label>
+			<nail x="-416" y="42"/>
+			<nail x="-408" y="42"/>
+			<nail x="-408" y="-178"/>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="-399" y="-51">scrubDone?</label>
+			<label kind="assignment" x="-399" y="-102">t = 0,
+rand_gen = 0,
+failOcc = false</label>
+			<nail x="-408" y="-68"/>
+			<nail x="-408" y="-68"/>
+			<nail x="-408" y="-178"/>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="-399" y="-187">scrubDone?</label>
+			<label kind="assignment" x="-399" y="-170">failOcc  = false,
+t = 0,
+rand_gen = 0</label>
+			<nail x="-408" y="-153"/>
+			<nail x="-408" y="-153"/>
+			<nail x="-408" y="-178"/>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id22"/>
+			<label kind="assignment" x="-1054" y="-127">t = 0</label>
+			<label kind="probability" x="-1105" y="-144">one_minus_lambda</label>
+			<nail x="-1011" y="-68"/>
+			<nail x="-1011" y="-76"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id27"/>
+			<label kind="guard" x="-620" y="-93">rand_gen == 2</label>
+			<nail x="-561" y="-68"/>
+			<nail x="-535" y="-68"/>
+			<nail x="-518" y="-68"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id25"/>
+			<label kind="guard" x="-612" y="-170">rand_gen == 1</label>
+			<label kind="assignment" x="-629" y="-153">catUpdate()</label>
+			<nail x="-654" y="-153"/>
+			<nail x="-595" y="-153"/>
+			<nail x="-552" y="-153"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id26"/>
+			<label kind="guard" x="-620" y="17">rand_gen == 3</label>
+			<label kind="assignment" x="-620" y="42">nonCatUpdate()</label>
+			<nail x="-654" y="42"/>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id22"/>
+			<label kind="guard" x="-782" y="-221">t&gt;=t_delay &amp;&amp; 
+faultInject == true</label>
+			<label kind="assignment" x="-926" y="-204">injectAttack = true</label>
+			<nail x="-646" y="-178"/>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id24"/>
+			<label kind="assignment" x="-833" y="-51">fail_update()</label>
+			<label kind="probability" x="-833" y="-68">lambda</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id22"/>
+			<target ref="id28"/>
+			<label kind="guard" x="-935" y="-161">t &gt;= 10 &amp;&amp; 
+attack_type == 1</label>
+			<label kind="assignment" x="-926" y="-119">t = 0</label>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id23"/>
+			<label kind="guard" x="-858" y="-289">attack_type == 0</label>
+			<label kind="synchronisation" x="-850" y="-272">nextMission?</label>
+			<label kind="assignment" x="-824" y="-306">t = 0</label>
+			<nail x="-943" y="-255"/>
+			<nail x="-663" y="-255"/>
+		</transition>
+	</template>
+	<template>
+		<name>blindScrub</name>
+		<declaration>clock t;
+
+const int TTS = 25;
+const int ST  = 2;
+int TTS_count  = 0;
+int TTS_count2 = 0;
+int TTS_count3 = 0;
+//int ST_count  = 0;
+
+void incTTS()
+{
+    t = 0;
+      TTS_count = TTS_count + 1;
+    
+
+}  
+
+void incST()
+{
+      t = 0;
+      ST_count = ST_count + 1;
+}  
+
+void reInt() 
+{
+    failOcc = false;
+    scrubUnav = false;
+    t = 0;
+    ST_count  = 0;
+    failMissionDone = false; 
+}</declaration>
+		<location id="id29" x="-535" y="-187">
+			<name x="-552" y="-178">Initial</name>
+			<label kind="invariant" x="-544" y="-161">t&lt;=1</label>
+		</location>
+		<location id="id30" x="-340" y="-187">
+			<name x="-365" y="-178">scrubbing_phase</name>
+			<label kind="invariant" x="-357" y="-161">t&lt;=1</label>
+		</location>
+		<init ref="id29"/>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id29"/>
+			<label kind="guard" x="-544" y="-144">t&gt;=1</label>
+			<label kind="assignment" x="-646" y="-195">incTTS()</label>
+			<nail x="-620" y="-170"/>
+			<nail x="-586" y="-161"/>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id30"/>
+			<label kind="guard" x="-357" y="-144">t&gt;=1 &amp;&amp;
+ST_count &lt; ST</label>
+			<label kind="assignment" x="-263" y="-204">incST()</label>
+			<nail x="-272" y="-187"/>
+			<nail x="-272" y="-187"/>
+			<nail x="-272" y="-204"/>
+			<nail x="-314" y="-195"/>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id29"/>
+			<label kind="guard" x="-484" y="-263">ST_count&gt;=ST</label>
+			<label kind="synchronisation" x="-484" y="-280">scrubDone!</label>
+			<label kind="assignment" x="-459" y="-238">reInt()</label>
+			<nail x="-340" y="-238"/>
+			<nail x="-535" y="-238"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id30"/>
+			<label kind="guard" x="-501" y="-212">TTS_count &gt;=TTS</label>
+			<label kind="assignment" x="-493" y="-187">failOcc  = true,
+t = 0,
+TTS_count = 0</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+
+
+// List one or more processes to be composed into a system.
+system GCS,UAV,Xspeed,injectFault,blindScrub;
+    </system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[&lt;=10000](&lt;&gt;GCS.failedGCSFI)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[&lt;=99999](&lt;&gt;GCS.Missions_Done)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[&lt;=9999](&lt;&gt;GCS.Missions_Done)
+</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>
